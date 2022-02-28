@@ -57,6 +57,7 @@ def get_orders(session, status):
         raise ApiException('The API key provided in this Python code must match that in the RIT client (please refer to the API hyperlink in the client toolbar and/or the RIT – User Guide – REST API Documentation.pdf)')
     orders = resp.json()
     return orders
+    
 
 # this is the main method containing the actual market making strategy logic
 def main():
