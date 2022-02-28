@@ -15,12 +15,13 @@ def signal_handler(signum, frame):
     shutdown = True
 
 # set your API key to authenticate to the RIT client
-API_KEY = {'X-API-Key': '474RQCA1'}
+API_KEY = {'X-API-Key': 'KEQ8ZITJ'}
 shutdown = False
 # other settings for market making algo
 SPREAD = 0.02
 BUY_VOLUME = 1000
 SELL_VOLUME = 1000
+
 
 # this helper method returns the current 'tick' of the running case
 def get_tick(session):
