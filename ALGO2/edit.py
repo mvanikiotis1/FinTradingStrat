@@ -3,6 +3,7 @@
 import signal
 import requests
 from time import sleep
+import pprint
 
 # this class definition allows us to print error messages and stop the program when needed
 class ApiException(Exception):
@@ -15,10 +16,10 @@ def signal_handler(signum, frame):
     shutdown = True
 
 # set your API key to authenticate to the RIT client
-API_KEY = {'X-API-Key': 'KEQ8ZITJ'}
+API_KEY = {'X-API-Key': '474RQCA1'}
 shutdown = False
 # other settings for market making algo
-SPREAD = 0.02
+SPREAD = 0.01
 BUY_VOLUME = 1000
 SELL_VOLUME = 1000
 
@@ -44,7 +45,7 @@ def ticker_close(session, ticker):
         raise ApiException('Response error. Unexpected JSON response.')
 
 # this helper method submits a pair of limit orders to buy and sell VOLUME of each security, at the last price +/- SPREAD
-def buy_sell(session, to_buy, to_sell, last):
+def buy_sell(session, to_buy, to_sell, last, BUY_VOLUME, SELL_VOLUME, SPREAD):
     buy_payload = {'ticker': to_buy, 'type': 'LIMIT', 'quantity': BUY_VOLUME, 'action': 'BUY', 'price': last - SPREAD}
     sell_payload = {'ticker': to_sell, 'type': 'LIMIT', 'quantity': SELL_VOLUME, 'action': 'SELL', 'price': last + SPREAD}
     session.post('http://localhost:9999/v1/orders', params=buy_payload)
@@ -70,23 +71,140 @@ def main():
         tick = get_tick(s)
 
         # while the time is between 5 and 295, do the following
-        while tick > 5 and tick < 295:
+        while tick > 1 and tick < 297:
             # get the open order book and ALGO last tick's close price
             orders = get_orders(s, 'OPEN')
             algo_close = ticker_close(s, 'ALGO')
+            position = s.get('http://localhost:9999/v1/securities?ticker=ALGO').json()
+            myposition = position[0]['position']
+            # pprint.pprint(position[0]['position'])
+
+            if int(myposition) > 10000:
+                SPREAD1 = 0.01
+                SPREAD2 = 0.02
+                BUY_VOLUME = 10
+                SELL_VOLUME = 500 
+            elif myposition < -10000:
+                SPREAD1 = 0.01
+                SPREAD2 = 0.02
+                BUY_VOLUME = 500
+                SELL_VOLUME = 10   
+            else:
+                SPREAD1 = 0.01
+                SPREAD2 = 0.02
+                BUY_VOLUME = 150
+                SELL_VOLUME = 150   
 
             # check if you have 0 open orders
             if len(orders) == 0:
                 # submit a pair of orders and update your order book
-                buy_sell(s, 'ALGO', 'ALGO', algo_close)
-                orders = get_orders(s, 'OPEN')
-                sleep(1)
+                for i in range(200):
+                    orders = get_orders(s, 'OPEN')
+                    algo_close = ticker_close(s, 'ALGO')
+                    position = s.get('http://localhost:9999/v1/securities?ticker=ALGO').json()
+                    myposition = position[0]['position']
+                    # pprint.pprint(myposition)
+                    if int(myposition) > 10000:
+                        SPREAD1 = 0.01
+                        BUY_VOLUME = 10
+                        SELL_VOLUME = 500 
+                    elif myposition < -10000:
+                        SPREAD1 = 0.01
+                        BUY_VOLUME = 500
+                        SELL_VOLUME = 10  
+                    else:
+                        SPREAD1 = 0.01
+                        BUY_VOLUME = 150
+                        SELL_VOLUME = 150 
+                    buy_sell(s, 'ALGO', 'ALGO', algo_close, BUY_VOLUME, SELL_VOLUME, SPREAD1)
+                    sleep(.1)
+                    orders = get_orders(s, 'OPEN')
+                    algo_close = ticker_close(s, 'ALGO')
+                    buy_sell(s, 'ALGO', 'ALGO', algo_close, BUY_VOLUME, SELL_VOLUME, SPREAD1)
+                    sleep(.1)
+                    orders = get_orders(s, 'OPEN')
+                    algo_close = ticker_close(s, 'ALGO')
+                    buy_sell(s, 'ALGO', 'ALGO', algo_close, BUY_VOLUME, SELL_VOLUME, SPREAD1)
+                    sleep(.1)
+                    orders = get_orders(s, 'OPEN')
+                    algo_close = ticker_close(s, 'ALGO')
+                    buy_sell(s, 'ALGO', 'ALGO', algo_close, BUY_VOLUME, SELL_VOLUME, SPREAD1)
+
+                    orders = get_orders(s, 'OPEN')
+                    algo_close = ticker_close(s, 'ALGO')
+                    position = s.get('http://localhost:9999/v1/securities?ticker=ALGO').json()
+                    myposition = position[0]['position']
+                    # pprint.pprint(myposition)
+                    if int(myposition) > 10000:
+                        SPREAD2 = 0.02
+                        BUY_VOLUME = 10
+                        SELL_VOLUME = 500 
+                    elif myposition < -10000:
+                        SPREAD2 = 0.02
+                        BUY_VOLUME = 500
+                        SELL_VOLUME = 10   
+                    else:
+                        SPREAD2 = 0.02
+                        BUY_VOLUME = 150
+                        SELL_VOLUME = 150 
+                    orders = get_orders(s, 'OPEN')
+                    algo_close = ticker_close(s, 'ALGO')
+                    buy_sell(s, 'ALGO', 'ALGO', algo_close, BUY_VOLUME, SELL_VOLUME, SPREAD2)
+                    sleep(.1)
+                    orders = get_orders(s, 'OPEN')
+                    algo_close = ticker_close(s, 'ALGO')
+                    buy_sell(s, 'ALGO', 'ALGO', algo_close, BUY_VOLUME, SELL_VOLUME, SPREAD2)
+                    sleep(.1)
+                    orders = get_orders(s, 'OPEN')
+                    algo_close = ticker_close(s, 'ALGO')
+                    buy_sell(s, 'ALGO', 'ALGO', algo_close, BUY_VOLUME, SELL_VOLUME, SPREAD2)
+                    sleep(.1)
+                    orders = get_orders(s, 'OPEN')
+                    algo_close = ticker_close(s, 'ALGO')
+                    buy_sell(s, 'ALGO', 'ALGO', algo_close, BUY_VOLUME, SELL_VOLUME, SPREAD2)
+                    orders = get_orders(s, 'OPEN')
+
+                    orders = get_orders(s, 'OPEN')
+                    algo_close = ticker_close(s, 'ALGO')
+                    position = s.get('http://localhost:9999/v1/securities?ticker=ALGO').json()
+                    myposition = position[0]['position']
+                    # pprint.pprint(myposition)
+                    if int(myposition) > 10000:
+                        SPREAD3 = SPREAD2 +.01
+                        BUY_VOLUME = 10
+                        SELL_VOLUME = 500 
+                    elif myposition < -10000:
+                        SPREAD3 = SPREAD2 +.01
+                        BUY_VOLUME = 500
+                        SELL_VOLUME = 10   
+                    else:
+                        SPREAD3 = SPREAD2 +.01
+                        BUY_VOLUME = 150
+                        SELL_VOLUME = 150 
+                    orders = get_orders(s, 'OPEN')
+                    algo_close = ticker_close(s, 'ALGO')
+                    buy_sell(s, 'ALGO', 'ALGO', algo_close, BUY_VOLUME, SELL_VOLUME, SPREAD3)
+                    sleep(.1)
+                    orders = get_orders(s, 'OPEN')
+                    algo_close = ticker_close(s, 'ALGO')
+                    buy_sell(s, 'ALGO', 'ALGO', algo_close, BUY_VOLUME, SELL_VOLUME, SPREAD3)
+                    sleep(.1)
+                    orders = get_orders(s, 'OPEN')
+                    algo_close = ticker_close(s, 'ALGO')
+                    buy_sell(s, 'ALGO', 'ALGO', algo_close, BUY_VOLUME, SELL_VOLUME, SPREAD3)
+                    sleep(.1)
+                    orders = get_orders(s, 'OPEN')
+                    algo_close = ticker_close(s, 'ALGO')
+                    buy_sell(s, 'ALGO', 'ALGO', algo_close, BUY_VOLUME, SELL_VOLUME, SPREAD3)
+                    orders = get_orders(s, 'OPEN')
+                    
+                # sleep(5)
 
             # check if you don't have a pair of open orders
-            if len(orders) != 2 and len(orders) > 0:
-                # submit a POST request to the order cancellation endpoint to cancel all open orders
-                s.post('http://localhost:9999/v1/commands/cancel?all=1')
-                sleep(1)
+            # if len(orders) != 2 and len(orders) > 0:
+            #     # submit a POST request to the order cancellation endpoint to cancel all open orders
+            #     s.post('http://localhost:9999/v1/commands/cancel?all=1')
+            #     sleep(1)
 
             # refresh the case time. THIS IS IMPORTANT FOR THE WHILE LOOP
             tick = get_tick(s)
