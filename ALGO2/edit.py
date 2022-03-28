@@ -70,25 +70,36 @@ def main():
         # get the current time of the case
         tick = get_tick(s)
 
+                #    CTRL + SHIFT + L = Change all names of the tickers
+
         # while the time is between 5 and 295, do the following
         while tick > 1 and tick < 297:
+
+
             # get the open order book and ALGO last tick's close price
             orders = get_orders(s, 'OPEN')
             algo_close = ticker_close(s, 'ALGO')
+
+            # Gets our Posistion of the Ticker
             position = s.get('http://localhost:9999/v1/securities?ticker=ALGO').json()
             myposition = position[0]['position']
             # pprint.pprint(position[0]['position'])
 
+            # If My posistion is Greater than 10000 then we set the variables as these
             if int(myposition) > 10000:
                 SPREAD1 = 0.01
                 SPREAD2 = 0.02
                 BUY_VOLUME = 10
                 SELL_VOLUME = 500 
+        
+            # If My position is Less than -10000 then we set the vairables as these
             elif myposition < -10000:
                 SPREAD1 = 0.01
                 SPREAD2 = 0.02
                 BUY_VOLUME = 500
-                SELL_VOLUME = 10   
+                SELL_VOLUME = 10  
+
+            #  Other wise we set the variables as these 
             else:
                 SPREAD1 = 0.01
                 SPREAD2 = 0.02
@@ -98,6 +109,8 @@ def main():
             # check if you have 0 open orders
             if len(orders) == 0:
                 # submit a pair of orders and update your order book
+
+                # Submiting orders for the entire duration of the case
                 for i in range(200):
                     orders = get_orders(s, 'OPEN')
                     algo_close = ticker_close(s, 'ALGO')
@@ -116,6 +129,8 @@ def main():
                         SPREAD1 = 0.01
                         BUY_VOLUME = 150
                         SELL_VOLUME = 150 
+
+                    # This is entering in the limit orders into the book
                     buy_sell(s, 'ALGO', 'ALGO', algo_close, BUY_VOLUME, SELL_VOLUME, SPREAD1)
                     sleep(.1)
                     orders = get_orders(s, 'OPEN')
@@ -130,6 +145,8 @@ def main():
                     algo_close = ticker_close(s, 'ALGO')
                     buy_sell(s, 'ALGO', 'ALGO', algo_close, BUY_VOLUME, SELL_VOLUME, SPREAD1)
 
+
+                    # This is rechecking the position and the ticker close and doing the exact same thing at the 2nd spread level
                     orders = get_orders(s, 'OPEN')
                     algo_close = ticker_close(s, 'ALGO')
                     position = s.get('http://localhost:9999/v1/securities?ticker=ALGO').json()
@@ -164,6 +181,8 @@ def main():
                     buy_sell(s, 'ALGO', 'ALGO', algo_close, BUY_VOLUME, SELL_VOLUME, SPREAD2)
                     orders = get_orders(s, 'OPEN')
 
+
+                    # This is rechecking the position and the ticker close and doing the exact same thing at the 2nd spread level
                     orders = get_orders(s, 'OPEN')
                     algo_close = ticker_close(s, 'ALGO')
                     position = s.get('http://localhost:9999/v1/securities?ticker=ALGO').json()
@@ -200,6 +219,9 @@ def main():
                     
                 # sleep(5)
 
+
+        # We are not canceling any orders that we enter.
+        
             # check if you don't have a pair of open orders
             # if len(orders) != 2 and len(orders) > 0:
             #     # submit a POST request to the order cancellation endpoint to cancel all open orders
