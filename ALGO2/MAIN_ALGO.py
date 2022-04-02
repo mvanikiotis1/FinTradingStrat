@@ -77,12 +77,12 @@ def buy_sell(session, to_buy, to_sell, last):
     session.post('http://localhost:9999/v1/orders', params=buy_payload)
     session.post('http://localhost:9999/v1/orders', params=sell_payload)
 
-def buy_bid(session, to_buy, bid):
-    buy_payload = {'ticker': to_buy, 'type': 'LIMIT', 'quantity': SCALP_VOLUME, 'action': 'BUY', 'price': bid + .01}
+def buy_bid(session, to_buy, bid, BUY_SCALP_VOLUME):
+    buy_payload = {'ticker': to_buy, 'type': 'LIMIT', 'quantity': BUY_SCALP_VOLUME, 'action': 'BUY', 'price': bid + .01}
     session.post('http://localhost:9999/v1/orders', params=buy_payload)
 
-def sell_ask(session, to_sell, ask):
-    buy_payload = {'ticker': to_sell, 'type': 'LIMIT', 'quantity': SCALP_VOLUME, 'action': 'SELL', 'price': ask - .01 }
+def sell_ask(session, to_sell, ask, SELL_SCALP_VOLUME):
+    buy_payload = {'ticker': to_sell, 'type': 'LIMIT', 'quantity': SELL_SCALP_VOLUME, 'action': 'SELL', 'price': ask - .01 }
     session.post('http://localhost:9999/v1/orders', params=buy_payload)
 
 # this helper method gets all the orders of a given type (OPEN/TRANSACTED/CANCELLED)
@@ -121,24 +121,26 @@ def main():
             position = s.get('http://localhost:9999/v1/securities?ticker=ALGO').json()
             myposition = position[0]['position']
             # pprint.pprint(myposition)
-            if myposition > 10000:
+            if myposition >= 15000:
                 SPREAD1 = 0.01
-                BUY_VOLUME = 10
-                SELL_VOLUME = 500 
-            elif myposition < -10000:
+                BUY_SCALP_VOLUME = 0
+                SELL_SCALP_VOLUME = 5000
+            elif myposition <= -15000:
                 SPREAD1 = 0.01
-                BUY_VOLUME = 500
-                SELL_VOLUME = 10 
+                BUY_SCALP_VOLUME = 5000
+                SELL_SCALP_VOLUME = 0 
             else:
                 SPREAD1 = 0.01
-                BUY_VOLUME = 350
-                SELL_VOLUME = 350 
+                BUY_SCALP_VOLUME = 5000
+                SELL_SCALP_VOLUME = 5000
 
             if ask - bid > .03:
-                buy_bid(s, 'ALGO', bid)
-                sell_ask(s, 'ALGO', ask)
-                buy_bid(s, 'ALGO', bid)
-                sell_ask(s, 'ALGO', ask)
+                buy_bid(s, 'ALGO', bid, BUY_SCALP_VOLUME)
+                sell_ask(s, 'ALGO', ask, SELL_SCALP_VOLUME)
+                buy_bid(s, 'ALGO', bid, BUY_SCALP_VOLUME)
+                sell_ask(s, 'ALGO', ask, SELL_SCALP_VOLUME)
+                buy_bid(s, 'ALGO', bid, BUY_SCALP_VOLUME)
+                sell_ask(s, 'ALGO', ask, SELL_SCALP_VOLUME)
                 sleep(2)
             
             
