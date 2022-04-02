@@ -20,8 +20,10 @@ API_KEY = {'X-API-Key': '474RQCA1'}
 shutdown = False
 # other settings for market making algo
 SPREAD = 0.01
+SCALP_SPREAD = 0.03
 BUY_VOLUME = 1000
 SELL_VOLUME = 1000
+SCALP_VOLUME = 5000
 
 
 # this helper method returns the current 'tick' of the running case
@@ -44,12 +46,28 @@ def ticker_close(session, ticker):
     else:
         raise ApiException('Response error. Unexpected JSON response.')
 
+def ticker_bid_ask(session, ticker): 
+   payload = {'ticker': ticker} 
+   resp = session.get('http://localhost:9999/v1/securities/book',params=payload) 
+   if resp.ok: 
+       book = resp.json() 
+       return book['bids'][0]['price'], book['asks'][0]['price'] 
+   raise ApiException('The API key provided in this Python code must match that in the RIT client (please refer to the APIhyperlink in the client toolbar and/or the RIT REST API Documentation.pdf)') 
+
 # this helper method submits a pair of limit orders to buy and sell VOLUME of each security, at the last price +/- SPREAD
 def buy_sell(session, to_buy, to_sell, last, BUY_VOLUME, SELL_VOLUME, SPREAD):
     buy_payload = {'ticker': to_buy, 'type': 'LIMIT', 'quantity': BUY_VOLUME, 'action': 'BUY', 'price': last - SPREAD}
     sell_payload = {'ticker': to_sell, 'type': 'LIMIT', 'quantity': SELL_VOLUME, 'action': 'SELL', 'price': last + SPREAD}
     session.post('http://localhost:9999/v1/orders', params=buy_payload)
     session.post('http://localhost:9999/v1/orders', params=sell_payload)
+
+def buy_bid(session, to_buy, bid):
+    buy_payload = {'ticker': to_buy, 'type': 'LIMIT', 'quantity': SCALP_VOLUME, 'action': 'BUY', 'price': bid + .01}
+    session.post('http://localhost:9999/v1/orders', params=buy_payload)
+
+def sell_ask(session, to_sell, ask):
+    buy_payload = {'ticker': to_sell, 'type': 'LIMIT', 'quantity': SCALP_VOLUME, 'action': 'SELL', 'price': ask - .01 }
+    session.post('http://localhost:9999/v1/orders', params=buy_payload)
 
 # this helper method gets all the orders of a given type (OPEN/TRANSACTED/CANCELLED)
 def get_orders(session, status):
@@ -79,6 +97,14 @@ def main():
             # get the open order book and ALGO last tick's close price
             orders = get_orders(s, 'OPEN')
             algo_close = ticker_close(s, 'ALGO')
+            bid, ask = ticker_bid_ask(s, 'ALGO')
+
+            # if ask - bid > .03:
+            #     buy_bid(s, 'ALGO', bid)
+            #     sell_ask(s, 'ALGO', ask)
+            #     buy_bid(s, 'ALGO', bid)
+            #     sell_ask(s, 'ALGO', ask)
+            #     sleep(2)
 
             # Gets our Posistion of the Ticker
             position = s.get('http://localhost:9999/v1/securities?ticker=ALGO').json()
@@ -111,8 +137,17 @@ def main():
                 # submit a pair of orders and update your order book
 
                 # Submiting orders for the entire duration of the case
-                for i in range(5):
+                for i in range(1):
                     orders = get_orders(s, 'OPEN')
+                    algo_close = ticker_close(s, 'ALGO')
+                    bid, ask = ticker_bid_ask(s, 'ALGO')
+
+                    if ask - bid > .03:
+                        buy_bid(s, 'ALGO', bid)
+                        sell_ask(s, 'ALGO', ask)
+                        buy_bid(s, 'ALGO', bid)
+                        sell_ask(s, 'ALGO', ask)
+                        # sleep(2)
                     algo_close = ticker_close(s, 'ALGO')
                     position = s.get('http://localhost:9999/v1/securities?ticker=ALGO').json()
                     myposition = position[0]['position']
@@ -323,16 +358,16 @@ def main():
                     algo_close = ticker_close(s, 'ALGO')
                     buy_sell(s, 'ALGO', 'ALGO', algo_close, BUY_VOLUME, SELL_VOLUME, SPREAD5)
                     orders = get_orders(s, 'OPEN')
-                # sleep(5)
+                # sleep(10)
 
 
         # We are not canceling any orders that we enter.
         
             # check if you don't have a pair of open orders
-            if len(orders) != 2 and len(orders) > 0:
-                # submit a POST request to the order cancellation endpoint to cancel all open orders
-                s.post('http://localhost:9999/v1/commands/cancel?all=1')
-                sleep(2)
+            # if len(orders) != 2 and len(orders) > 0:
+            #     # submit a POST request to the order cancellation endpoint to cancel all open orders
+            #     s.post('http://localhost:9999/v1/commands/cancel?all=1')
+            #     sleep(2)
 
             # refresh the case time. THIS IS IMPORTANT FOR THE WHILE LOOP
             tick = get_tick(s)
