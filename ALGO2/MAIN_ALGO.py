@@ -78,10 +78,16 @@ def buy_sell(session, to_buy, to_sell, last):
     session.post('http://localhost:9999/v1/orders', params=sell_payload)
 
 def buy_bid(session, to_buy, bid, BUY_SCALP_VOLUME):
+    """
+    This is a function that puts in a order 1 cent above the current bid
+    """
     buy_payload = {'ticker': to_buy, 'type': 'LIMIT', 'quantity': BUY_SCALP_VOLUME, 'action': 'BUY', 'price': bid + .01}
     session.post('http://localhost:9999/v1/orders', params=buy_payload)
 
 def sell_ask(session, to_sell, ask, SELL_SCALP_VOLUME):
+    """
+    This is a function that puts in a order 1 cent below the current ask
+    """
     buy_payload = {'ticker': to_sell, 'type': 'LIMIT', 'quantity': SELL_SCALP_VOLUME, 'action': 'SELL', 'price': ask - .01 }
     session.post('http://localhost:9999/v1/orders', params=buy_payload)
 
@@ -102,6 +108,12 @@ def ticker_bid_ask(session, ticker):
        return book['bids'][0]['price'], book['asks'][0]['price'] 
    raise ApiException('The API key provided in this Python code must match that in the RIT client (please refer to the APIhyperlink in the client toolbar and/or the RIT REST API Documentation.pdf)') 
 
+
+ticker1 = "ALGO"
+# ticker2 = ""
+# ticker3 = ""
+
+
 # this is the main method containing the actual market making strategy logic
 def main():
     # creates a session to manage connections and requests to the RIT Client
@@ -118,22 +130,20 @@ def main():
             algo_close = ticker_close(s, 'ALGO')
             bid, ask = ticker_bid_ask(s, 'ALGO')
 
+            # This is getting information about or position sizing and assiging variables based off of the size
             position = s.get('http://localhost:9999/v1/securities?ticker=ALGO').json()
             myposition = position[0]['position']
-            # pprint.pprint(myposition)
             if myposition >= 15000:
-                SPREAD1 = 0.01
                 BUY_SCALP_VOLUME = 0
                 SELL_SCALP_VOLUME = 5000
             elif myposition <= -15000:
-                SPREAD1 = 0.01
                 BUY_SCALP_VOLUME = 5000
                 SELL_SCALP_VOLUME = 0 
             else:
-                SPREAD1 = 0.01
                 BUY_SCALP_VOLUME = 5000
                 SELL_SCALP_VOLUME = 5000
 
+            #  This is placeing orders using the above criteriea that was assigned based off of our position sizing.
             if ask - bid > .03:
                 buy_bid(s, 'ALGO', bid, BUY_SCALP_VOLUME)
                 sell_ask(s, 'ALGO', ask, SELL_SCALP_VOLUME)
